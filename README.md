@@ -2,7 +2,7 @@
 
 Radar web de vagas Front-End no Brasil, desenvolvido com JavaScript, HTML, CSS e Node.js. A aplicação coleta vagas públicas do LinkedIn em background, persiste os dados no MongoDB Atlas e disponibiliza o histórico em um dashboard responsivo hospedado no Netlify.
 
-## Demo
+## Netlify
 
 https://frontendradar-nodejs.netlify.app/
 
