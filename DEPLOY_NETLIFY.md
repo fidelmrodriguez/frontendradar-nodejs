@@ -1,60 +1,41 @@
 # Deploy no Netlify + MongoDB Atlas
 
-Este projeto foi preparado para usar um único repositório GitHub:
+Este arquivo documenta a infraestrutura necessária para publicar o LinkedIn Front-End Radar. Ele é separado do README para manter a apresentação do projeto mais objetiva e deixar o processo de deploy reproduzível.
+
+## Arquitetura de deploy
 
 ```txt
 GitHub
-  ├── front-end JavaScript/HTML/CSS
-  └── back-end Netlify Functions (Node.js)
+  ├── front-end HTML/CSS/JavaScript
+  └── back-end Netlify Functions / Node.js
 
 Netlify
   ├── publica public/
   └── executa netlify/functions/
 
 MongoDB Atlas
-  └── salva as vagas e o estado da coleta
+  └── persiste vagas e estado do coletor
 ```
 
-## 1. Criar o MongoDB Atlas
+## 1. MongoDB Atlas
 
-1. Acesse o MongoDB Atlas e crie um projeto.
-2. Crie um cluster.
-3. Em `Database Access`, crie um usuário de banco e uma senha forte.
-4. Em `Network Access`, libere acesso para as Functions do Netlify. Como Functions serverless podem usar IPs variáveis, a configuração simples é `0.0.0.0/0`. Use credenciais fortes e exclusivas para este projeto.
-5. Em `Connect` > `Drivers`, copie a connection string.
+Crie um cluster e um usuário de banco. Em `Network Access`, permita a conexão das Netlify Functions.
+
+Depois copie a connection string em `Connect` → `Drivers`.
 
 Exemplo:
 
 ```txt
-mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/?retryWrites=true&w=majority
 ```
 
-Não coloque essa URI dentro de nenhum arquivo que será enviado ao GitHub.
+A URI não deve ser commitada no GitHub.
 
-## 2. Subir o projeto no GitHub
+## 2. Netlify
 
-Pode subir o front e o back juntos. O que não pode subir é a senha/URI do MongoDB.
+Importe o repositório GitHub no Netlify.
 
-Crie um repositório vazio no GitHub e, dentro da pasta do projeto, rode:
-
-```bash
-git init
-git add -A
-git commit -m "Adiciona LinkedIn Front-End Radar v26"
-git branch -M main
-git remote add origin URL_DO_SEU_REPOSITORIO
-git push -u origin main
-```
-
-O repositório pode ser público ou privado. Se for privado, autorize o Netlify a acessá-lo quando fizer a integração com GitHub.
-
-## 3. Criar o site no Netlify
-
-1. Entre no Netlify.
-2. Clique em `Add new project` / `Import an existing project`.
-3. Escolha GitHub.
-4. Escolha o repositório deste radar.
-5. O `netlify.toml` já define:
+O projeto já possui `netlify.toml` com:
 
 ```txt
 Publish directory: public
@@ -62,18 +43,11 @@ Functions directory: netlify/functions
 Node: 20
 ```
 
-Não precisa configurar framework. O front é JavaScript puro e não possui build.
+Não existe etapa de build do front-end.
 
-## 4. Configurar variáveis de ambiente
+## 3. Variáveis de ambiente
 
-No Netlify, abra:
-
-```txt
-Site configuration
-→ Environment variables
-```
-
-Crie:
+Configure no Netlify:
 
 ```txt
 MONGODB_URI = mongodb+srv://...
@@ -85,17 +59,15 @@ MAINTENANCE_MAX_JOBS = 2000
 
 `MONGODB_URI` é obrigatória.
 
-Depois de criar as variáveis, faça um novo deploy.
+## 4. Validar o deploy
 
-## 5. Testar o banco
-
-Com o deploy publicado, abra:
+Após publicar, teste:
 
 ```txt
 https://SEU-SITE.netlify.app/api/health
 ```
 
-O resultado esperado é semelhante a:
+Resposta esperada:
 
 ```json
 {
@@ -104,75 +76,64 @@ O resultado esperado é semelhante a:
 }
 ```
 
-Se aparecer `MONGODB_URI não configurada`, confira as variáveis de ambiente e faça novo deploy.
-
-## 6. Abrir o Radar
-
-Abra:
+Depois abra:
 
 ```txt
 https://SEU-SITE.netlify.app/
 ```
 
-Se o banco ainda estiver vazio, `/api/jobs` inicia uma pequena coleta inicial. Você também pode clicar em `Atualizar agora`.
+## 5. Coleta automática
 
-## 7. Coleta automática com o dashboard fechado
-
-O arquivo `netlify.toml` contém:
+O `netlify.toml` agenda:
 
 ```toml
 [functions."scheduled-collect"]
   schedule = "*/5 * * * *"
 ```
 
-Isso chama a função de coleta periodicamente no Netlify.
+A coleta continua funcionando mesmo com o navegador fechado ou o computador desligado.
 
-Portanto:
+A busca histórica usa `LINKEDIN_LOCATION=Brazil` e não aplica filtro de período. O monitor de vagas recentes usa uma janela de 24 horas.
 
-* pode fechar a aba;
-* pode fechar o Chrome;
-* pode finalizar o navegador pelo Gerenciador de Tarefas;
-* pode desligar seu computador;
-* pode abrir pelo celular depois.
+## 6. Retenção automática
 
-As vagas que já chegaram ao MongoDB continuam salvas e a coleta não depende do seu navegador.
+O projeto executa manutenção diária pelo `scheduled-maintenance`.
 
-## 8. Sobre o favicon verde
-
-O site usa dois favicons:
+Por padrão:
 
 ```txt
-favicon.svg
-favicon-new.svg
+MAINTENANCE_RETENTION_DAYS = 90
+MAINTENANCE_MAX_JOBS = 2000
 ```
 
-Quando existe pelo menos uma vaga com menos de uma hora, o JavaScript troca para `favicon-new.svg`, que contém a bolinha verde.
+A manutenção remove vagas fora da retenção e mantém somente as vagas mais recentes quando o limite máximo é ultrapassado.
 
-Quando nenhuma vaga carregada estiver abaixo de uma hora, ele volta automaticamente para o favicon normal.
+Não há botão de manutenção no dashboard.
 
-`NOVO`, `≤ 1 HORA`, contorno verde e favicon verde usam a mesma regra de tempo.
+## 7. Favicon de vagas recentes
 
-## 9. Não indexar nos mecanismos de busca
+O dashboard utiliza:
 
-O projeto contém três camadas:
+```txt
+favicon.ico
+favicon-new.ico
+```
 
-1. `robots.txt` com `Disallow: /`;
-2. `<meta name="robots" content="noindex,...">` no HTML;
-3. `X-Robots-Tag: noindex...` em `public/_headers` e nas APIs.
+Quando existe uma vaga com menos de uma hora, o JavaScript troca para o favicon com indicador verde. `NOVO`, `≤ 1 HORA`, contorno verde e favicon usam a mesma regra de tempo.
 
-Isso instrui mecanismos de busca a não indexarem o projeto.
+## 8. Não indexação
 
-Importante: `noindex` não é senha. Quem souber a URL ainda poderá abrir o site. Para bloquear acesso de verdade, use proteção por autenticação/senha.
+O projeto utiliza:
 
-## 10. Atualizações futuras
+* `robots.txt` com `Disallow: /`;
+* meta tag `robots` com `noindex`;
+* `X-Robots-Tag` nos headers e APIs.
 
-Quando eu te enviar uma nova versão:
+Isso reduz a indexação por mecanismos de busca, mas não substitui autenticação.
 
-1. substitua os arquivos do repositório;
-2. commit/push;
-3. o Netlify cria um novo deploy automaticamente.
+## 9. Atualizações
 
-Exemplo:
+Depois do primeiro deploy, novas versões normalmente exigem apenas:
 
 ```bash
 git add -A
@@ -180,27 +141,4 @@ git commit -m "Atualiza LinkedIn Front-End Radar"
 git push origin main
 ```
 
-Você não precisa recriar o banco. Enquanto continuar usando o mesmo `MONGODB_URI` e `MONGODB_DB`, as vagas persistem entre versões.
-
-
-## 11. Manutenção do MongoDB
-
-A v26 inclui manutenção manual e automática.
-
-No dashboard, clique em:
-
-```txt
-Manutenção do banco
-```
-
-Esse botão chama `/api/maintenance` e executa uma política segura e fixa:
-
-* remove vagas com mais de `MAINTENANCE_RETENTION_DAYS` dias (90 por padrão);
-* mantém no máximo `MAINTENANCE_MAX_JOBS` vagas (2.000 por padrão);
-* nunca apaga o estado do coletor;
-* não apaga configurações do Netlify ou do MongoDB;
-* retorna quantas vagas foram removidas e, quando disponível, o tamanho do Atlas antes/depois.
-
-Além disso, `scheduled-maintenance` executa a mesma limpeza automaticamente todos os dias às 03:15 UTC.
-
-Com os valores padrão, a coleção de vagas não cresce indefinidamente. Você pode clicar no botão quando quiser sem precisar entrar no painel do MongoDB Atlas.
+O Netlify cria um novo deploy automaticamente. O banco continua sendo o mesmo enquanto `MONGODB_URI` e `MONGODB_DB` não forem alterados.

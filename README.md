@@ -1,31 +1,33 @@
 # LinkedIn Front-End Radar
 
-LinkedIn Front-End Radar é um radar de vagas Front-End do Brasil construído com JavaScript puro, HTML e CSS, com persistência no MongoDB Atlas e coleta automática por Netlify Functions.
+Radar web de vagas Front-End no Brasil, desenvolvido com JavaScript, HTML, CSS e Node.js. A aplicação coleta vagas públicas do LinkedIn em background, persiste os dados no MongoDB Atlas e disponibiliza o histórico em um dashboard responsivo hospedado no Netlify.
 
-## Netlify
+## Demo
 
 https://frontendradar-nodejs.netlify.app/
 
-## Recursos
+## Objetivo
 
-* Dashboard web sem SPA e sem framework de front-end.
-* Vagas salvas no MongoDB e compartilhadas entre computador, celular e qualquer outro navegador.
-* Coleta automática em background pelo Netlify, sem depender do dashboard aberto.
-* Busca pública de vagas do LinkedIn, sem usar login, cookie ou conta Premium.
-* Coleta contínua de vagas Front-End em todo o Brasil, com histórico carregado aos poucos e sem filtro de período na busca histórica.
-* Ordenação das vagas da mais recente para a mais antiga.
-* IDs diferentes são exibidos separadamente mesmo quando título, empresa e local são iguais.
+Centralizar vagas Front-End do Brasil em uma única interface, priorizando vagas recentes e mantendo o histórico disponível independentemente do navegador ou dispositivo utilizado.
+
+## Principais recursos
+
+* Dashboard responsivo em JavaScript puro, sem framework de front-end.
+* Coleta automática em background com Netlify Functions.
+* Persistência compartilhada no MongoDB Atlas.
+* Busca em múltiplas consultas Front-End com localização `Brazil`.
+* Histórico coletado incrementalmente, sem filtro de período na busca histórica.
+* Ordenação da vaga mais recente para a mais antiga.
+* Deduplicação somente pelo ID da vaga no LinkedIn.
 * Filtro local por cargo, empresa ou localização.
-* Filtro de período.
-* Tags `NOVO` e `≤ 1 HORA` na mesma linha do título.
-* Contorno verde enquanto a vaga tiver menos de uma hora.
-* Favicon com bolinha verde enquanto existir ao menos uma vaga com menos de uma hora.
-* Botão para atualização manual.
-* Manutenção automática diária no Netlify como proteção adicional contra crescimento indefinido do MongoDB.
-* Tratamento de `429` com pausa automática.
-* Sem remoção de vagas, sem log de removidas e sem restauração.
-* Bloqueio de indexação por `robots.txt`, meta tags e `X-Robots-Tag`.
-* Layout responsivo para desktop e celular.
+* Filtro de período no dashboard.
+* Destaque visual para vagas com menos de uma hora (`NOVO` e `≤ 1 HORA`).
+* Favicon dinâmico para sinalizar a existência de vagas recentes.
+* Atualização manual sob demanda.
+* Tratamento de rate limit (`HTTP 429`) com backoff automático.
+* Coleta concorrente protegida por lock no MongoDB.
+* Política automática de retenção para controlar o crescimento da base.
+* Bloqueio de indexação por mecanismos de busca.
 
 ## Stack
 
@@ -36,16 +38,45 @@ https://frontendradar-nodejs.netlify.app/
 * Netlify Functions
 * MongoDB Atlas
 * Cheerio
+* Node.js Test Runner
 
 ## Arquitetura
 
 ```txt
-linkedin-frontend-radar-javascript/
+LinkedIn - endpoint público de vagas
+              │
+              ▼
+     Netlify Functions / Node.js
+              │
+      ┌───────┴────────┐
+      │                │
+      ▼                ▼
+ coleta agendada   coleta manual
+      │                │
+      └───────┬────────┘
+              ▼
+         MongoDB Atlas
+              │
+              ▼
+           /api/jobs
+              │
+              ▼
+      Dashboard HTML/CSS/JS
+```
+
+O navegador é responsável apenas pela apresentação, filtros e atualização visual. A coleta e a persistência ficam no back-end serverless e no MongoDB Atlas.
+
+## Estrutura do projeto
+
+```txt
+linkedinfrontendradar-nodejs/
 ├── public/
 │   ├── assets/
 │   │   ├── css/styles.css
 │   │   └── js/main.js
 │   ├── _headers
+│   ├── favicon.ico
+│   ├── favicon-new.ico
 │   ├── favicon.svg
 │   ├── favicon-new.svg
 │   ├── index.html
@@ -55,69 +86,64 @@ linkedin-frontend-radar-javascript/
 │       ├── _lib/
 │       │   ├── collector.mjs
 │       │   ├── db.mjs
-│       │   └── linkedin.mjs
+│       │   ├── linkedin.mjs
+│       │   └── maintenance.mjs
 │       ├── collect-now.mjs
 │       ├── health.mjs
 │       ├── jobs.mjs
 │       ├── maintenance.mjs
-│       ├── scheduled-maintenance.mjs
-│       └── scheduled-collect.mjs
+│       ├── scheduled-collect.mjs
+│       └── scheduled-maintenance.mjs
 ├── tests/
 │   └── linkedin.test.mjs
-├── .env.example
-├── .gitignore
-├── DEPLOY_NETLIFY.md
 ├── netlify.toml
 ├── package.json
+├── DEPLOY_NETLIFY.md
 └── README.md
 ```
 
-O navegador só exibe e filtra os dados. A coleta e a persistência ficam no back-end das Netlify Functions e no MongoDB Atlas.
+## Como a coleta funciona
 
-## Requisitos
+A aplicação utiliza o endpoint público de busca de vagas do LinkedIn e executa múltiplas consultas relacionadas a Front-End, como `frontend`, `front end`, `react frontend`, `angular frontend`, `vue frontend` e `next.js frontend`.
 
-* Node.js 20 ou superior.
-* npm 10 ou superior.
-* Conta no GitHub.
-* Conta no Netlify.
-* Cluster no MongoDB Atlas.
+O histórico é percorrido de forma incremental e o coletor mantém seu progresso no MongoDB. As vagas são normalizadas e filtradas antes da persistência. IDs diferentes continuam sendo tratados como vagas diferentes, mesmo quando título e empresa coincidem.
 
-## Como clonar e rodar
+O `scheduled-collect` roda a cada 5 minutos no Netlify. Em caso de `429`, o coletor entra em backoff e retoma automaticamente.
+
+## Persistência e retenção
+
+As vagas ficam armazenadas no MongoDB Atlas, portanto o histórico continua disponível ao abrir o site em outro computador, celular ou navegador.
+
+A política padrão mantém vagas de até 90 dias e limita a coleção às 2.000 vagas mais recentes. Esses valores podem ser alterados pelas variáveis de ambiente `MAINTENANCE_RETENTION_DAYS` e `MAINTENANCE_MAX_JOBS`.
+
+## Executar localmente
 
 ```bash
-git clone <url-do-repositorio>
-cd linkedin-frontend-radar-javascript
+git clone https://github.com/fidelmrodriguez/linkedinfrontendradar-nodejs.git
+cd linkedinfrontendradar-nodejs
 npm install
-```
-
-Crie um `.env` usando `.env.example` como base e execute:
-
-```bash
 npm run dev
 ```
 
-O Netlify CLI informa a URL local no terminal.
+Configure as variáveis de ambiente necessárias antes de iniciar o projeto localmente.
 
-## Scripts disponíveis
+## Scripts
 
 ```bash
-npm run dev   # executa site + Netlify Functions localmente
+npm run dev   # executa o site e as Netlify Functions localmente
 npm test      # executa os testes
 npm run check # executa a validação do projeto
 ```
 
 ## Deploy
 
-O passo a passo completo está em `DEPLOY_NETLIFY.md`.
+O guia de infraestrutura e publicação está em [`DEPLOY_NETLIFY.md`](./DEPLOY_NETLIFY.md).
 
 ## Observações técnicas
 
-* Front-end e back-end podem ficar no mesmo repositório GitHub. O código das Functions pode ser versionado normalmente.
-* `MONGODB_URI` nunca deve ser commitada. Ela fica nas variáveis de ambiente do Netlify.
-* O banco não fica dentro do Netlify ou do GitHub: ele fica no MongoDB Atlas.
-* O Netlify executa `scheduled-collect` a cada 5 minutos, então o radar continua coletando mesmo com todos os seus navegadores fechados.
-* A manutenção automática do banco roda diariamente no Netlify.
-* Por padrão, o banco guarda no máximo 2.000 vagas e descarta vagas com mais de 90 dias. Os limites podem ser alterados pelas variáveis `MAINTENANCE_RETENTION_DAYS` e `MAINTENANCE_MAX_JOBS`.
-* Fechar navegador, finalizar processo ou desligar o computador não apaga vagas já gravadas no MongoDB.
-* A deduplicação é somente por ID do LinkedIn. Título/empresa iguais com IDs diferentes continuam aparecendo.
-* O site pede aos mecanismos de busca para não indexarem nenhuma página. Isso reduz fortemente a indexação, mas não funciona como autenticação. Se a URL precisar ser realmente privada, use proteção de acesso adicional.
+* Front-end e back-end ficam no mesmo repositório.
+* O MongoDB Atlas é a fonte persistente de dados.
+* O coletor não depende do dashboard aberto.
+* O histórico da coleta é retomado a partir do estado salvo no banco.
+* O site solicita `noindex` por `robots.txt`, meta tags e `X-Robots-Tag`.
+* `MONGODB_URI` deve ser configurada como variável de ambiente e nunca versionada no repositório.
