@@ -79,7 +79,7 @@ async function subscribe() {
     title: 'Clique para desativar as notificações deste dispositivo.',
   });
 
-  await registration.showNotification('LinkedIn Front-End Radar', {
+  await registration.showNotification('frontendradar-nodejs', {
     body: 'Notificações ativadas. Você será avisado quando surgir uma vaga Front-End nova.',
     icon: '/icon-192.png',
     tag: 'frontend-radar-enabled',

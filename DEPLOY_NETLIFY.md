@@ -1,6 +1,6 @@
 # Deploy no Netlify + MongoDB Atlas
 
-Este arquivo documenta a infraestrutura necessária para publicar o LinkedIn Front-End Radar. Ele é separado do README para manter a apresentação do projeto mais objetiva e deixar o processo de deploy reproduzível.
+Este arquivo documenta a infraestrutura necessária para publicar o frontendradar-nodejs. Ele é separado do README para manter a apresentação do projeto mais objetiva e deixar o processo de deploy reproduzível.
 
 ## Arquitetura de deploy
 
@@ -147,7 +147,7 @@ Depois do primeiro deploy, novas versões normalmente exigem apenas:
 
 ```bash
 git add -A
-git commit -m "Atualiza LinkedIn Front-End Radar"
+git commit -m "Atualiza frontendradar-nodejs"
 git push origin main
 ```
 

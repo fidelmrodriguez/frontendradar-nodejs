@@ -1,8 +1,8 @@
 {
-  "name": "linkedin-frontend-radar-javascript",
+  "name": "frontendradar-nodejs",
   "version": "26.0.0",
   "private": true,
-  "description": "LinkedIn Front-End Radar em JavaScript puro, com persistência no MongoDB Atlas e coleta por Netlify Functions.",
+  "description": "frontendradar-nodejs: radar de vagas Front-End com JavaScript puro, Node.js, Netlify Functions e MongoDB Atlas.",
   "type": "module",
   "scripts": {
     "dev": "npx netlify-cli dev",

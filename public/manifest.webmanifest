@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "LinkedIn Front-End Radar",
-  "short_name": "Front-End Radar",
+  "name": "frontendradar-nodejs",
+  "short_name": "frontendradar-nodejs",
   "description": "Radar de vagas Front-End no Brasil com coleta automática e notificações Web Push.",
   "start_url": "/",
   "scope": "/",

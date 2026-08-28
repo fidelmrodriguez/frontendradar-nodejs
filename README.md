@@ -1,4 +1,4 @@
-# LinkedIn Front-End Radar
+# frontendradar-nodejs
 
 Radar web de vagas Front-End no Brasil, desenvolvido com JavaScript, HTML, CSS e Node.js. A aplicação coleta vagas públicas do LinkedIn em background, persiste os dados no MongoDB Atlas e disponibiliza o histórico em um dashboard responsivo hospedado no Netlify.
 
@@ -75,7 +75,7 @@ O navegador é responsável apenas pela apresentação, filtros e atualização 
 ## Estrutura do projeto
 
 ```txt
-linkedinfrontendradar-nodejs/
+frontendradar-nodejs/
 ├── public/
 │   ├── assets/
 │   │   ├── css/styles.css
@@ -148,8 +148,8 @@ A política padrão mantém vagas de até 90 dias e limita a coleção às 2.000
 ## Executar localmente
 
 ```bash
-git clone https://github.com/fidelmrodriguez/linkedinfrontendradar-nodejs.git
-cd linkedinfrontendradar-nodejs
+git clone https://github.com/fidelmrodriguez/frontendradar-nodejs.git
+cd frontendradar-nodejs
 npm install
 npm run dev
 ```
