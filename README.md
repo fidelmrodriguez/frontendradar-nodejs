@@ -18,6 +18,7 @@ https://frontendradar-nodejs.netlify.app/
 * Filtro local por cargo, empresa ou localização.
 * Filtro de período no dashboard.
 * Destaque visual para vagas com menos de uma hora (`NOVO` e `≤ 1 HORA`).
+* Indicador de ritmo médio recente (`1 vaga / X`), recalculado dinamicamente com as vagas carregadas dos últimos 30 dias.
 * Favicon dinâmico para sinalizar a existência de vagas recentes.
 * Atualização manual sob demanda.
 * Tratamento de rate limit (`HTTP 429`) com backoff automático.
@@ -105,6 +106,8 @@ A aplicação utiliza o endpoint público de busca de vagas do LinkedIn e execut
 O histórico é percorrido de forma incremental e o coletor mantém seu progresso no MongoDB. As vagas são normalizadas e filtradas antes da persistência. IDs diferentes continuam sendo tratados como vagas diferentes, mesmo quando título e empresa coincidem.
 
 O `scheduled-collect` roda a cada 5 minutos no Netlify. Em caso de `429`, o coletor entra em backoff e retoma automaticamente.
+
+O dashboard também calcula, em tempo real, o ritmo médio recente de publicação das vagas carregadas nos últimos 30 dias. O indicador aparece junto aos status no formato `1 vaga / X` e é apenas uma estimativa baseada nos dados já coletados pelo radar.
 
 ## Persistência e retenção
 

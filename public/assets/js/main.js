@@ -8,6 +8,7 @@ const elements = {
   newCount: document.querySelector('#newCount'),
   hourCount: document.querySelector('#hourCount'),
   lastCollection: document.querySelector('#lastCollection'),
+  averageInterval: document.querySelector('#averageInterval'),
   notice: document.querySelector('#notice'),
   loadingState: document.querySelector('#loadingState'),
   jobList: document.querySelector('#jobList'),
@@ -116,6 +117,38 @@ function formatLastCollection(timestamp) {
   });
 }
 
+
+function getAverageRecentIntervalMs() {
+  const now = Date.now();
+  const cutoff = now - PERIOD_MS.r2592000;
+  const timestamps = state.jobs
+    .map(job => Number(job?.postedAt || 0))
+    .filter(timestamp => Number.isFinite(timestamp) && timestamp >= cutoff && timestamp <= now)
+    .sort((a, b) => a - b);
+
+  if (timestamps.length < 2) return null;
+  const span = timestamps[timestamps.length - 1] - timestamps[0];
+  return span > 0 ? span / (timestamps.length - 1) : null;
+}
+
+function formatAverageInterval(intervalMs) {
+  if (!intervalMs) return 'calculando...';
+
+  const totalMinutes = Math.max(1, Math.round(intervalMs / 60000));
+  if (totalMinutes < 60) return `1 vaga / ${totalMinutes} min`;
+
+  const totalHours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (totalHours < 24) return `1 vaga / ${totalHours}h${minutes ? ` ${minutes}min` : ''}`;
+
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  if (days < 30) return `1 vaga / ${days}d${hours ? ` ${hours}h` : ''}`;
+
+  const months = Math.max(1, Math.round(days / 30.4375));
+  return `1 vaga / ${months} ${months === 1 ? 'mês' : 'meses'}`;
+}
+
 function getFilteredJobs() {
   const search = elements.searchInput.value.trim().toLowerCase();
   const period = elements.periodSelect.value;
@@ -155,6 +188,7 @@ function renderStatus() {
   elements.newCount.textContent = String(fresh);
   elements.hourCount.textContent = String(fresh);
   elements.lastCollection.textContent = formatLastCollection(state.collector.lastCollectionAt);
+  elements.averageInterval.textContent = formatAverageInterval(getAverageRecentIntervalMs());
 
   elements.statusDot.className = 'status-dot';
   if (inBackoff) {
