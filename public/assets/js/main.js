@@ -13,6 +13,7 @@ const elements = {
   jobList: document.querySelector('#jobList'),
   emptyState: document.querySelector('#emptyState'),
   favicon: document.querySelector('#app-favicon'),
+  shortcutFavicon: document.querySelector('#shortcut-favicon'),
 };
 
 const state = {
@@ -56,7 +57,7 @@ function getJobAgeMs(job) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ');
 
-  if (/\b(agora|just now|moments? ago|instantes?)\b/.test(postedText)) return 0;
+  if (/\b(agora|ha pouco|just now|moments? ago|instantes?|a moment ago|recently)\b/.test(postedText)) return 0;
 
   const minutesMatch = postedText.match(/(\d+)\s*(min|minuto|minutos|minute|minutes)\b/);
   if (minutesMatch) return Number(minutesMatch[1]) * 60 * 1000;
@@ -77,6 +78,9 @@ function isWithinHour(job) {
 }
 
 function prettyAge(job) {
+  const rawPostedText = String(job?.postedText || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/\bha pouco\b/.test(rawPostedText)) return 'há pouco';
+
   const diff = getJobAgeMs(job);
   if (diff === null) return job?.postedText || 'data não informada';
 
@@ -136,9 +140,11 @@ function renderFavicon(freshCount) {
   const mode = freshCount > 0 ? 'new' : 'normal';
   if (elements.favicon.dataset.mode === mode) return;
 
-  const target = mode === 'new' ? '/favicon-new.svg?v=27' : '/favicon.svg?v=27';
-  elements.favicon.dataset.mode = mode;
-  elements.favicon.href = target;
+  const target = mode === 'new' ? '/favicon-new.ico?v=28' : '/favicon.ico?v=28';
+  [elements.favicon, elements.shortcutFavicon].filter(Boolean).forEach(icon => {
+    icon.dataset.mode = mode;
+    icon.href = target;
+  });
 }
 
 function renderStatus() {

@@ -87,7 +87,7 @@ export function isFrontTitle(title) {
 function parseRelative(text) {
   const value = norm(text);
   if (!value) return null;
-  if (/just now|agora|moments? ago|instantes?/.test(value)) return Date.now();
+  if (/just now|agora|ha pouco|moments? ago|instantes?|a moment ago|recently/.test(value)) return Date.now();
 
   const match = value.match(/(\d+)/);
   const amount = match ? Number(match[1]) : 1;
@@ -113,7 +113,7 @@ function parsePostedAt(text, datetime) {
   const absolute = parseAbsolute(datetime);
   const normalized = norm(text);
 
-  if (/just now|agora|moments? ago|instantes?/.test(normalized)
+  if (/just now|agora|ha pouco|moments? ago|instantes?|a moment ago|recently/.test(normalized)
     || /\b(minute|minutes|minuto|minutos|min|hour|hours|hora|horas|hr|hrs|h)\b/.test(normalized)) {
     return relative ?? absolute;
   }
