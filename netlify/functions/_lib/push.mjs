@@ -124,7 +124,7 @@ export async function getPushPublicKey() {
   return config.publicKey;
 }
 
-export async function savePushSubscription(subscription, { userAgent = '' } = {}) {
+export async function savePushSubscription(subscription, { userAgent = '', clientId = '' } = {}) {
   await getVapidConfig();
 
   const normalized = normalizeSubscription(subscription);
@@ -137,6 +137,7 @@ export async function savePushSubscription(subscription, { userAgent = '' } = {}
       $set: {
         ...normalized,
         userAgent: String(userAgent || '').slice(0, 500),
+        clientId: String(clientId || '').slice(0, 120),
         updatedAt: now,
       },
       $setOnInsert: { createdAt: now },

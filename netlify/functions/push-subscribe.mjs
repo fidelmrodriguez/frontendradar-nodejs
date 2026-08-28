@@ -15,6 +15,7 @@ export default async request => {
     const body = await request.json();
     await savePushSubscription(body?.subscription, {
       userAgent: request.headers.get('user-agent') || '',
+      clientId: body?.clientId || '',
     });
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });

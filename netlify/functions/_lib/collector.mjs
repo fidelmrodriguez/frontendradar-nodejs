@@ -143,13 +143,20 @@ async function upsertJobs(db, jobs, source) {
   const existing = await collection
     .find(
       { _id: { $in: jobsToStore.map(job => job.id) } },
-      { projection: { _id: 1, pushProcessedAt: 1 } },
+      { projection: { _id: 1, pushProcessedAt: 1, postedAt: 1 } },
     )
     .toArray();
   const existingById = new Map(existing.map(item => [String(item._id), item]));
   const pushCandidates = source.startsWith('monitor:')
     ? jobsToStore.filter(job => !Number(existingById.get(String(job.id))?.pushProcessedAt || 0))
     : [];
+
+  const stablePostedAt = job => {
+    const incoming = Number(job?.postedAt || 0);
+    const previous = Number(existingById.get(String(job?.id))?.postedAt || 0);
+    if (incoming && previous) return Math.min(incoming, previous);
+    return incoming || previous || null;
+  };
 
   const operations = jobsToStore.map(job => ({
     updateOne: {
@@ -162,7 +169,7 @@ async function upsertJobs(db, jobs, source) {
           location: job.location,
           postedText: job.postedText,
           postedDatetime: job.postedDatetime,
-          postedAt: job.postedAt,
+          postedAt: stablePostedAt(job),
           easyApply: Boolean(job.easyApply),
           url: job.url,
           lastSeenAt: now,

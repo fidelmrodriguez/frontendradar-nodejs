@@ -18,7 +18,7 @@ https://frontendradar-nodejs.netlify.app/
 * Filtro local por cargo, empresa ou localização.
 * Filtro de período no dashboard.
 * Destaque visual para vagas com menos de uma hora (`NOVO` e `≤ 1 HORA`).
-* Indicador de ritmo médio recente (`1 vaga / X`), recalculado dinamicamente com as vagas carregadas dos últimos 30 dias.
+* Indicador de ritmo médio (`1 vaga / X`), recalculado dinamicamente com todas as vagas atualmente carregadas no dashboard.
 * Favicon dinâmico para sinalizar a existência de vagas recentes.
 * Notificações Web Push para novas vagas, com Service Worker e suporte a desktop e dispositivos móveis compatíveis.
 * PWA instalável, permitindo uma experiência mais próxima de um aplicativo no celular.
@@ -127,13 +127,13 @@ O histórico é percorrido de forma incremental e o coletor mantém seu progress
 
 O `scheduled-collect` roda a cada 5 minutos no Netlify. Em caso de `429`, o coletor entra em backoff e retoma automaticamente.
 
-O dashboard também calcula, em tempo real, o ritmo médio recente de publicação das vagas carregadas nos últimos 30 dias. O indicador aparece junto aos status no formato `1 vaga / X` e é apenas uma estimativa baseada nos dados já coletados pelo radar.
+O dashboard também calcula, em tempo real, o ritmo médio de publicação usando todas as vagas atualmente carregadas na listagem. O indicador aparece junto aos status no formato `1 vaga / X` e é uma estimativa baseada nos dados já coletados pelo radar.
 
 ## Notificações Web Push
 
 O botão `Ativar notificações` registra um Service Worker e solicita a permissão nativa do navegador. A assinatura Web Push é armazenada no MongoDB Atlas e o coletor envia uma notificação na primeira vez que o monitor identifica uma vaga ainda não processada para push e com menos de uma hora.
 
-A notificação é entregue pelo sistema operacional mesmo quando a aba do radar não está em primeiro plano. Ao clicar, a vaga correspondente é aberta no LinkedIn. Assinaturas expiradas são removidas automaticamente do banco.
+A notificação é entregue pelo sistema operacional mesmo quando a aba do radar não está em primeiro plano. Ao clicar, a vaga correspondente é aberta no LinkedIn. O estado do botão é restaurado após recarregar a página e cada navegador/dispositivo mantém sua própria assinatura, portanto ativar ou desativar em uma máquina não altera as demais. Assinaturas expiradas são removidas automaticamente do banco.
 
 No Android e em navegadores desktop compatíveis, o Web Push funciona diretamente após a permissão. Em iPhone e iPad, o radar deve ser adicionado à Tela de Início e aberto como web app para receber Web Push.
 

@@ -68,6 +68,18 @@ function getJobAgeMs(job) {
   const hoursMatch = postedText.match(/(\d+)\s*(h|hora|horas|hour|hours|hr|hrs)\b/);
   if (hoursMatch) return Number(hoursMatch[1]) * 60 * 60 * 1000;
 
+  const daysMatch = postedText.match(/(\d+)\s*(dia|dias|day|days)\b/);
+  if (daysMatch) return Number(daysMatch[1]) * 24 * 60 * 60 * 1000;
+
+  const weeksMatch = postedText.match(/(\d+)\s*(semana|semanas|week|weeks)\b/);
+  if (weeksMatch) return Number(weeksMatch[1]) * 7 * 24 * 60 * 60 * 1000;
+
+  const monthsMatch = postedText.match(/(\d+)\s*(mes|meses|month|months)\b/);
+  if (monthsMatch) return Number(monthsMatch[1]) * 30.4375 * 24 * 60 * 60 * 1000;
+
+  const yearsMatch = postedText.match(/(\d+)\s*(ano|anos|year|years)\b/);
+  if (yearsMatch) return Number(yearsMatch[1]) * 365.25 * 24 * 60 * 60 * 1000;
+
   const timestamp = Number(job?.postedAt || 0);
   if (!timestamp) return null;
 
@@ -120,12 +132,14 @@ function formatLastCollection(timestamp) {
 }
 
 
-function getAverageRecentIntervalMs() {
+function getAverageListingIntervalMs() {
   const now = Date.now();
-  const cutoff = now - PERIOD_MS.r2592000;
   const timestamps = state.jobs
-    .map(job => Number(job?.postedAt || 0))
-    .filter(timestamp => Number.isFinite(timestamp) && timestamp >= cutoff && timestamp <= now)
+    .map(job => {
+      const age = getJobAgeMs(job);
+      return age === null ? null : now - age;
+    })
+    .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0 && timestamp <= now)
     .sort((a, b) => a - b);
 
   if (timestamps.length < 2) return null;
@@ -151,6 +165,20 @@ function formatAverageInterval(intervalMs) {
   return `1 vaga / ${months} ${months === 1 ? 'mês' : 'meses'}`;
 }
 
+function compareJobsByRecency(a, b) {
+  const ageA = getJobAgeMs(a);
+  const ageB = getJobAgeMs(b);
+
+  if (ageA !== null && ageB !== null && ageA !== ageB) return ageA - ageB;
+  if (ageA !== null && ageB === null) return -1;
+  if (ageA === null && ageB !== null) return 1;
+
+  const postedAtDiff = Number(b?.postedAt || 0) - Number(a?.postedAt || 0);
+  if (postedAtDiff) return postedAtDiff;
+
+  return String(b?.id || '').localeCompare(String(a?.id || ''));
+}
+
 function getFilteredJobs() {
   const search = elements.searchInput.value.trim().toLowerCase();
   const period = elements.periodSelect.value;
@@ -168,7 +196,7 @@ function getFilteredJobs() {
     }
 
     return true;
-  });
+  }).sort(compareJobsByRecency);
 }
 
 function renderFavicon(freshCount) {
@@ -190,7 +218,7 @@ function renderStatus() {
   elements.newCount.textContent = String(fresh);
   elements.hourCount.textContent = String(fresh);
   elements.lastCollection.textContent = formatLastCollection(state.collector.lastCollectionAt);
-  elements.averageInterval.textContent = formatAverageInterval(getAverageRecentIntervalMs());
+  elements.averageInterval.textContent = formatAverageInterval(getAverageListingIntervalMs());
 
   elements.statusDot.className = 'status-dot';
   if (inBackoff) {
