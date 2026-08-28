@@ -140,7 +140,7 @@ function renderFavicon(freshCount) {
   const mode = freshCount > 0 ? 'new' : 'normal';
   if (elements.favicon.dataset.mode === mode) return;
 
-  const target = mode === 'new' ? '/favicon-new.ico?v=28' : '/favicon.ico?v=28';
+  const target = mode === 'new' ? '/favicon-new.ico?v=29' : '/favicon.ico?v=29';
   [elements.favicon, elements.shortcutFavicon].filter(Boolean).forEach(icon => {
     icon.dataset.mode = mode;
     icon.href = target;
