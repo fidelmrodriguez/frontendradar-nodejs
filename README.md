@@ -4,7 +4,7 @@ LinkedIn Front-End Radar é um radar de vagas Front-End construído com JavaScri
 
 ## Netlify
 
-https://linkedinfrontendradar-nodejs.netlify.app/
+https://frontendradar-nodejs.netlify.app/
 
 ## Recursos
 
