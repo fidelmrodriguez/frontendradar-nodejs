@@ -55,14 +55,13 @@
       <span>NOVO: <strong id="newCount">0</strong></span>
       <span>≤ 1 hora: <strong id="hourCount">0</strong></span>
       <span>Última coleta: <strong id="lastCollection">—</strong></span>
+      <div id="loadingState" class="loading-inline" role="status" aria-live="polite">
+        <span class="mini-spinner" aria-hidden="true"></span>
+        <span>Carregando vagas...</span>
+      </div>
     </section>
 
     <div id="notice" class="notice" hidden></div>
-
-    <div id="loadingState" class="loading-inline" role="status" aria-live="polite">
-      <span class="mini-spinner" aria-hidden="true"></span>
-      <span>Carregando vagas...</span>
-    </div>
 
     <section id="jobList" class="job-list" hidden></section>
     <section id="emptyState" class="empty-state" hidden>Nenhuma vaga encontrada com esses filtros.</section>
