@@ -21,7 +21,6 @@
 
       <div class="hero__actions">
         <button id="refreshNow" type="button" class="button button--secondary">Atualizar agora</button>
-        <button id="maintenanceNow" type="button" class="button button--secondary" title="Remove vagas com mais de 90 dias e mantém somente as 2.000 mais recentes">Manutenção do banco</button>
         <a
           class="button"
           href="https://www.linkedin.com/jobs/search/?keywords=frontend&location=Brazil&sortBy=DD"
@@ -60,13 +59,10 @@
 
     <div id="notice" class="notice" hidden></div>
 
-    <section id="loadingState" class="loading-state" role="status" aria-live="polite">
-      <div>
-        <div class="spinner"></div>
-        <strong>Carregando vagas de Front-End</strong>
-        <span>Lendo o banco persistente...</span>
-      </div>
-    </section>
+    <div id="loadingState" class="loading-inline" role="status" aria-live="polite">
+      <span class="mini-spinner" aria-hidden="true"></span>
+      <span>Carregando vagas...</span>
+    </div>
 
     <section id="jobList" class="job-list" hidden></section>
     <section id="emptyState" class="empty-state" hidden>Nenhuma vaga encontrada com esses filtros.</section>

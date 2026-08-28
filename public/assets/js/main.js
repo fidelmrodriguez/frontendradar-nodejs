@@ -1,6 +1,5 @@
 const elements = {
   refreshNow: document.querySelector('#refreshNow'),
-  maintenanceNow: document.querySelector('#maintenanceNow'),
   searchInput: document.querySelector('#searchInput'),
   periodSelect: document.querySelector('#periodSelect'),
   statusDot: document.querySelector('#statusDot'),
@@ -28,7 +27,6 @@ const state = {
   },
   loading: true,
   refreshing: false,
-  maintaining: false,
   info: '',
   error: '',
 };
@@ -218,8 +216,11 @@ async function loadJobs({ quiet = false } = {}) {
     render();
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
   try {
-    const response = await fetch('/api/jobs', { cache: 'no-store' });
+    const response = await fetch('/api/jobs', { cache: 'no-store', signal: controller.signal });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
 
@@ -227,8 +228,10 @@ async function loadJobs({ quiet = false } = {}) {
     state.collector = { ...state.collector, ...(data.state || {}) };
     state.error = '';
   } catch (error) {
-    state.error = `Não foi possível carregar as vagas: ${error?.message || error}`;
+    const message = error?.name === 'AbortError' ? 'tempo limite excedido' : (error?.message || error);
+    state.error = `Não foi possível carregar as vagas: ${message}`;
   } finally {
+    clearTimeout(timeout);
     state.loading = false;
     render();
   }
@@ -255,43 +258,9 @@ async function refreshNow() {
   }
 }
 
-async function runMaintenance() {
-  if (state.maintaining) return;
-  state.maintaining = true;
-  state.info = '';
-  elements.maintenanceNow.disabled = true;
-  elements.maintenanceNow.textContent = 'Executando manutenção...';
-
-  try {
-    const response = await fetch('/api/maintenance', { method: 'POST', cache: 'no-store' });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
-
-    const removed = Number(data.deletedTotal || 0);
-    const remaining = Number(data.afterCount || 0);
-    const sizeMb = Number.isFinite(Number(data.afterAtlasSizeMb)) ? ` • Atlas: ${Number(data.afterAtlasSizeMb).toFixed(2)} MB` : '';
-    state.info = `Manutenção concluída: ${removed} vaga(s) antiga(s) removida(s) • ${remaining} vaga(s) mantida(s)${sizeMb}.`;
-    state.error = '';
-    await loadJobs({ quiet: true });
-    render();
-    setTimeout(() => {
-      state.info = '';
-      render();
-    }, 10_000);
-  } catch (error) {
-    state.error = `Falha na manutenção do banco: ${error?.message || error}`;
-    render();
-  } finally {
-    state.maintaining = false;
-    elements.maintenanceNow.disabled = false;
-    elements.maintenanceNow.textContent = 'Manutenção do banco';
-  }
-}
-
 elements.searchInput.addEventListener('input', render);
 elements.periodSelect.addEventListener('change', render);
 elements.refreshNow.addEventListener('click', refreshNow);
-elements.maintenanceNow.addEventListener('click', runMaintenance);
 
 loadJobs();
 setInterval(() => loadJobs({ quiet: true }), 30_000);

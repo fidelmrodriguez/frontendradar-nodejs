@@ -1,6 +1,6 @@
 # LinkedIn Front-End Radar
 
-LinkedIn Front-End Radar é um radar de vagas Front-End construído com JavaScript puro, HTML e CSS, com persistência no MongoDB Atlas e coleta automática por Netlify Functions.
+LinkedIn Front-End Radar é um radar de vagas Front-End do Brasil construído com JavaScript puro, HTML e CSS, com persistência no MongoDB Atlas e coleta automática por Netlify Functions.
 
 ## Netlify
 
@@ -12,7 +12,7 @@ https://frontendradar-nodejs.netlify.app/
 * Vagas salvas no MongoDB e compartilhadas entre computador, celular e qualquer outro navegador.
 * Coleta automática em background pelo Netlify, sem depender do dashboard aberto.
 * Busca pública de vagas do LinkedIn, sem usar login, cookie ou conta Premium.
-* Histórico carregado aos poucos e monitoramento de vagas recentes.
+* Coleta contínua de vagas Front-End em todo o Brasil, com histórico carregado aos poucos e sem filtro de período na busca histórica.
 * Ordenação das vagas da mais recente para a mais antiga.
 * IDs diferentes são exibidos separadamente mesmo quando título, empresa e local são iguais.
 * Filtro local por cargo, empresa ou localização.
@@ -21,7 +21,6 @@ https://frontendradar-nodejs.netlify.app/
 * Contorno verde enquanto a vaga tiver menos de uma hora.
 * Favicon com bolinha verde enquanto existir ao menos uma vaga com menos de uma hora.
 * Botão para atualização manual.
-* Botão `Manutenção do banco`: remove vagas com mais de 90 dias e mantém no máximo as 2.000 mais recentes.
 * Manutenção automática diária no Netlify como proteção adicional contra crescimento indefinido do MongoDB.
 * Tratamento de `429` com pausa automática.
 * Sem remoção de vagas, sem log de removidas e sem restauração.
@@ -117,7 +116,7 @@ O passo a passo completo está em `DEPLOY_NETLIFY.md`.
 * `MONGODB_URI` nunca deve ser commitada. Ela fica nas variáveis de ambiente do Netlify.
 * O banco não fica dentro do Netlify ou do GitHub: ele fica no MongoDB Atlas.
 * O Netlify executa `scheduled-collect` a cada 5 minutos, então o radar continua coletando mesmo com todos os seus navegadores fechados.
-* A manutenção automática roda diariamente e o mesmo processo pode ser executado manualmente com um único clique no dashboard.
+* A manutenção automática do banco roda diariamente no Netlify.
 * Por padrão, o banco guarda no máximo 2.000 vagas e descarta vagas com mais de 90 dias. Os limites podem ser alterados pelas variáveis `MAINTENANCE_RETENTION_DAYS` e `MAINTENANCE_MAX_JOBS`.
 * Fechar navegador, finalizar processo ou desligar o computador não apaga vagas já gravadas no MongoDB.
 * A deduplicação é somente por ID do LinkedIn. Título/empresa iguais com IDs diferentes continuam aparecendo.
