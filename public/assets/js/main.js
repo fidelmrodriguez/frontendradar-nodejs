@@ -1,3 +1,5 @@
+import { initPushNotifications } from './push.js';
+
 const elements = {
   refreshNow: document.querySelector('#refreshNow'),
   searchInput: document.querySelector('#searchInput'),
@@ -325,6 +327,7 @@ elements.searchInput.addEventListener('input', render);
 elements.periodSelect.addEventListener('change', render);
 elements.refreshNow.addEventListener('click', refreshNow);
 
+initPushNotifications();
 loadJobs();
 setInterval(() => loadJobs({ quiet: true }), 30_000);
 setInterval(render, 20_000);

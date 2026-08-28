@@ -57,7 +57,7 @@ MAINTENANCE_RETENTION_DAYS = 90
 MAINTENANCE_MAX_JOBS = 2000
 ```
 
-`MONGODB_URI` é obrigatória.
+`MONGODB_URI` é obrigatória. Para Web Push não é necessário configurar chaves manualmente: o back-end gera o par VAPID automaticamente no primeiro uso e o persiste no MongoDB Atlas. A chave privada não é enviada ao navegador nem versionada no repositório.
 
 ## 4. Validar o deploy
 
@@ -121,7 +121,17 @@ favicon-new.ico
 
 Quando existe uma vaga com menos de uma hora, o JavaScript troca para o favicon com indicador verde. `NOVO`, `≤ 1 HORA`, contorno verde e favicon usam a mesma regra de tempo.
 
-## 8. Não indexação
+## 8. Web Push e PWA
+
+O front-end registra `public/sw.js`, usa `PushManager` para criar a assinatura e grava a assinatura no MongoDB por `/api/push/subscribe`.
+
+Quando o monitor encontra uma vaga realmente nova com menos de uma hora, o back-end envia uma notificação usando VAPID. O clique na notificação abre diretamente a vaga no LinkedIn.
+
+No Android e em navegadores desktop compatíveis, basta permitir notificações. No iPhone/iPad, adicione o site à Tela de Início e abra o radar pelo ícone instalado antes de ativar as notificações.
+
+O projeto inclui `manifest.webmanifest` e ícones de PWA para permitir a instalação no celular.
+
+## 9. Não indexação
 
 O projeto utiliza:
 
@@ -131,7 +141,7 @@ O projeto utiliza:
 
 Isso reduz a indexação por mecanismos de busca, mas não substitui autenticação.
 
-## 9. Atualizações
+## 10. Atualizações
 
 Depois do primeiro deploy, novas versões normalmente exigem apenas:
 

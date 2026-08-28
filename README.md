@@ -20,6 +20,8 @@ https://frontendradar-nodejs.netlify.app/
 * Destaque visual para vagas com menos de uma hora (`NOVO` e `≤ 1 HORA`).
 * Indicador de ritmo médio recente (`1 vaga / X`), recalculado dinamicamente com as vagas carregadas dos últimos 30 dias.
 * Favicon dinâmico para sinalizar a existência de vagas recentes.
+* Notificações Web Push para novas vagas, com Service Worker e suporte a desktop e dispositivos móveis compatíveis.
+* PWA instalável, permitindo uma experiência mais próxima de um aplicativo no celular.
 * Atualização manual sob demanda.
 * Tratamento de rate limit (`HTTP 429`) com backoff automático.
 * Coleta concorrente protegida por lock no MongoDB.
@@ -35,6 +37,8 @@ https://frontendradar-nodejs.netlify.app/
 * Netlify Functions
 * MongoDB Atlas
 * Cheerio
+* Web Push / VAPID
+* Service Workers / PWA
 * Node.js Test Runner
 
 ## Arquitetura
@@ -45,20 +49,25 @@ LinkedIn - endpoint público de vagas
               ▼
      Netlify Functions / Node.js
               │
-      ┌───────┴────────┐
-      │                │
-      ▼                ▼
- coleta agendada   coleta manual
-      │                │
-      └───────┬────────┘
-              ▼
-         MongoDB Atlas
-              │
-              ▼
-           /api/jobs
-              │
-              ▼
-      Dashboard HTML/CSS/JS
+      ┌───────┴───────────────┐
+      │                       │
+      ▼                       ▼
+ coleta agendada         coleta manual
+      │                       │
+      └──────────┬────────────┘
+                 ▼
+            MongoDB Atlas
+                 │
+        ┌────────┴─────────┐
+        │                  │
+        ▼                  ▼
+     /api/jobs         Web Push / VAPID
+        │                  │
+        ▼                  ▼
+ Dashboard HTML/CSS/JS   Service Worker
+                           │
+                           ▼
+                 Notificação do sistema
 ```
 
 O navegador é responsável apenas pela apresentação, filtros e atualização visual. A coleta e a persistência ficam no back-end serverless e no MongoDB Atlas.
@@ -70,12 +79,19 @@ linkedinfrontendradar-nodejs/
 ├── public/
 │   ├── assets/
 │   │   ├── css/styles.css
-│   │   └── js/main.js
+│   │   └── js/
+│   │       ├── main.js
+│   │       └── push.js
 │   ├── _headers
 │   ├── favicon.ico
 │   ├── favicon-new.ico
 │   ├── favicon.svg
 │   ├── favicon-new.svg
+│   ├── icon-192.png
+│   ├── icon-512.png
+│   ├── apple-touch-icon.png
+│   ├── manifest.webmanifest
+│   ├── sw.js
 │   ├── index.html
 │   └── robots.txt
 ├── netlify/
@@ -84,11 +100,15 @@ linkedinfrontendradar-nodejs/
 │       │   ├── collector.mjs
 │       │   ├── db.mjs
 │       │   ├── linkedin.mjs
-│       │   └── maintenance.mjs
+│       │   ├── maintenance.mjs
+│       │   └── push.mjs
 │       ├── collect-now.mjs
 │       ├── health.mjs
 │       ├── jobs.mjs
 │       ├── maintenance.mjs
+│       ├── push-public-key.mjs
+│       ├── push-subscribe.mjs
+│       ├── push-unsubscribe.mjs
 │       ├── scheduled-collect.mjs
 │       └── scheduled-maintenance.mjs
 ├── tests/
@@ -108,6 +128,16 @@ O histórico é percorrido de forma incremental e o coletor mantém seu progress
 O `scheduled-collect` roda a cada 5 minutos no Netlify. Em caso de `429`, o coletor entra em backoff e retoma automaticamente.
 
 O dashboard também calcula, em tempo real, o ritmo médio recente de publicação das vagas carregadas nos últimos 30 dias. O indicador aparece junto aos status no formato `1 vaga / X` e é apenas uma estimativa baseada nos dados já coletados pelo radar.
+
+## Notificações Web Push
+
+O botão `Ativar notificações` registra um Service Worker e solicita a permissão nativa do navegador. A assinatura Web Push é armazenada no MongoDB Atlas e o coletor envia uma notificação na primeira vez que o monitor identifica uma vaga ainda não processada para push e com menos de uma hora.
+
+A notificação é entregue pelo sistema operacional mesmo quando a aba do radar não está em primeiro plano. Ao clicar, a vaga correspondente é aberta no LinkedIn. Assinaturas expiradas são removidas automaticamente do banco.
+
+No Android e em navegadores desktop compatíveis, o Web Push funciona diretamente após a permissão. Em iPhone e iPad, o radar deve ser adicionado à Tela de Início e aberto como web app para receber Web Push.
+
+A chave VAPID privada nunca fica no front-end ou no repositório. No primeiro uso, o back-end gera automaticamente um par VAPID e o mantém no MongoDB Atlas na configuração interna da aplicação. Assim, depois de o MongoDB já estar configurado, não é necessário cadastrar chaves Web Push manualmente no Netlify.
 
 ## Persistência e retenção
 

@@ -34,3 +34,18 @@
   from = "/api/maintenance"
   to = "/.netlify/functions/maintenance"
   status = 200
+
+[[redirects]]
+  from = "/api/push/public-key"
+  to = "/.netlify/functions/push-public-key"
+  status = 200
+
+[[redirects]]
+  from = "/api/push/subscribe"
+  to = "/.netlify/functions/push-subscribe"
+  status = 200
+
+[[redirects]]
+  from = "/api/push/unsubscribe"
+  to = "/.netlify/functions/push-unsubscribe"
+  status = 200

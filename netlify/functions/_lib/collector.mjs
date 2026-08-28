@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getDb } from './db.mjs';
 import { fetchLinkedInSearch, parseSearchHtml } from './linkedin.mjs';
 import { getRetentionDays, getMaxStoredJobs } from './maintenance.mjs';
+import { notifyNewJobs } from './push.mjs';
 
 const PAGE_SIZE = 10;
 const MAX_RAW_EMPTY = 5;
@@ -132,11 +133,23 @@ function nextHistoryLane(state) {
 }
 
 async function upsertJobs(db, jobs, source) {
-  if (!jobs.length) return 0;
+  if (!jobs.length) return { added: 0, pushCandidates: [] };
   const now = Date.now();
   const cutoff = now - getRetentionDays() * 24 * 60 * 60 * 1000;
   const jobsToStore = jobs.filter(job => !Number(job.postedAt || 0) || Number(job.postedAt) >= cutoff);
-  if (!jobsToStore.length) return 0;
+  if (!jobsToStore.length) return { added: 0, pushCandidates: [] };
+
+  const collection = db.collection('jobs');
+  const existing = await collection
+    .find(
+      { _id: { $in: jobsToStore.map(job => job.id) } },
+      { projection: { _id: 1, pushProcessedAt: 1 } },
+    )
+    .toArray();
+  const existingById = new Map(existing.map(item => [String(item._id), item]));
+  const pushCandidates = source.startsWith('monitor:')
+    ? jobsToStore.filter(job => !Number(existingById.get(String(job.id))?.pushProcessedAt || 0))
+    : [];
 
   const operations = jobsToStore.map(job => ({
     updateOne: {
@@ -164,7 +177,6 @@ async function upsertJobs(db, jobs, source) {
     },
   }));
 
-  const collection = db.collection('jobs');
   const result = await collection.bulkWrite(operations, { ordered: false });
 
   const maxJobs = getMaxStoredJobs();
@@ -180,7 +192,25 @@ async function upsertJobs(db, jobs, source) {
     }
   }
 
-  return Number(result.upsertedCount || 0);
+  return {
+    added: Number(result.upsertedCount || 0),
+    pushCandidates,
+  };
+}
+
+async function processPushCandidates(db, jobs) {
+  if (!jobs.length) return;
+
+  try {
+    await notifyNewJobs(jobs);
+  } catch (error) {
+    console.warn('Falha ao disparar notificações:', error?.message || error);
+  } finally {
+    await db.collection('jobs').updateMany(
+      { _id: { $in: jobs.map(job => job.id) } },
+      { $set: { pushProcessedAt: Date.now() } },
+    );
+  }
 }
 
 function setNetworkError(state, response) {
@@ -207,7 +237,11 @@ async function collectPage(db, state, { term, start, period, source }) {
   }
 
   const parsed = parseSearchHtml(response.html);
-  const added = await upsertJobs(db, parsed.jobs, source);
+  const stored = await upsertJobs(db, parsed.jobs, source);
+
+  if (source.startsWith('monitor:') && stored.pushCandidates.length) {
+    await processPushCandidates(db, stored.pushCandidates);
+  }
 
   state.lastSuccessfulRequestAt = Date.now();
   state.lastError = '';
@@ -215,7 +249,7 @@ async function collectPage(db, state, { term, start, period, source }) {
   state.lastCollectionAt = Date.now();
   await saveState(db, state);
 
-  return { ok: true, rawCount: parsed.rawCount, added, jobs: parsed.jobs };
+  return { ok: true, rawCount: parsed.rawCount, added: stored.added, jobs: parsed.jobs };
 }
 
 async function collectMonitor(db, state) {

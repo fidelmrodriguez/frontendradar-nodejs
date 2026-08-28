@@ -31,6 +31,8 @@ export async function getDb() {
     indexesPromise = Promise.all([
       db.collection('jobs').createIndex({ postedAt: -1 }),
       db.collection('jobs').createIndex({ lastSeenAt: -1 }),
+      db.collection('push_subscriptions').createIndex({ endpoint: 1 }, { unique: true }),
+      db.collection('push_subscriptions').createIndex({ updatedAt: -1 }),
     ]).catch(() => undefined);
   }
 
