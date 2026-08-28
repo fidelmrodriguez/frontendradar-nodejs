@@ -26,7 +26,7 @@ async function fetchPublicKey() {
   const response = await fetch('/api/push/public-key', { cache: 'no-store' });
   const data = await response.json();
   if (!response.ok || !data?.publicKey) {
-    throw new Error(data?.error || 'Web Push não configurado');
+    throw new Error('Não foi possível obter a configuração de notificações.');
   }
   return data.publicKey;
 }
@@ -38,7 +38,7 @@ async function syncSubscription(subscription) {
     body: JSON.stringify({ subscription: subscription.toJSON() }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data?.error || 'Falha ao salvar assinatura');
+  if (!response.ok) throw new Error('Não foi possível salvar a assinatura de notificações.');
 }
 
 async function subscribe() {
@@ -121,7 +121,7 @@ async function toggleNotifications() {
     console.error(error);
     setButton({
       text: 'Ativar notificações 🔔',
-      title: `Falha ao ativar: ${error?.message || error}`,
+      title: 'Falha ao ativar notificações. Verifique sua conexão e tente novamente.',
     });
   }
 }
@@ -173,7 +173,7 @@ export async function initPushNotifications() {
     setButton({
       text: 'Notificações indisponíveis',
       disabled: true,
-      title: error?.message || 'Falha ao iniciar notificações.',
+      title: 'Falha ao iniciar notificações. Tente novamente mais tarde.',
     });
   }
 }

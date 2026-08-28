@@ -12,8 +12,9 @@ export default async () => {
     await db.command({ ping: 1 });
     return new Response(JSON.stringify({ ok: true, database: db.databaseName }), { status: 200, headers });
   } catch (error) {
+    console.error('Erro interno:', error);
     return new Response(
-      JSON.stringify({ ok: false, error: String(error?.message || error) }),
+      JSON.stringify({ ok: false, error: 'Não foi possível verificar a conexão com o banco de dados.' }),
       { status: 500, headers },
     );
   }

@@ -17,8 +17,9 @@ export default async () => {
 
     return new Response(JSON.stringify(data), { status: 200, headers });
   } catch (error) {
+    console.error('Erro interno:', error);
     return new Response(
-      JSON.stringify({ error: String(error?.message || error) }),
+      JSON.stringify({ error: 'Erro interno ao carregar as vagas.' }),
       { status: 500, headers },
     );
   }

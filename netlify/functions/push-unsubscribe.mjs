@@ -8,7 +8,7 @@ const headers = {
 
 export default async request => {
   if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Use POST' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Método não permitido. Use POST.' }), { status: 405, headers });
   }
 
   try {
@@ -16,8 +16,9 @@ export default async request => {
     await removePushSubscription(body?.endpoint);
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   } catch (error) {
+    console.error('Erro interno:', error);
     return new Response(
-      JSON.stringify({ error: String(error?.message || error) }),
+      JSON.stringify({ error: 'Não foi possível remover a assinatura de notificações.' }),
       { status: 400, headers },
     );
   }

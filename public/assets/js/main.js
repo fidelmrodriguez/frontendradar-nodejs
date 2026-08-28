@@ -285,14 +285,15 @@ async function loadJobs({ quiet = false } = {}) {
   try {
     const response = await fetch('/api/jobs', { cache: 'no-store', signal: controller.signal });
     const data = await response.json();
-    if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
+    if (!response.ok) throw new Error('Não foi possível carregar as vagas.');
 
     state.jobs = Array.isArray(data.jobs) ? data.jobs : [];
     state.collector = { ...state.collector, ...(data.state || {}) };
     state.error = '';
   } catch (error) {
-    const message = error?.name === 'AbortError' ? 'tempo limite excedido' : (error?.message || error);
-    state.error = `Não foi possível carregar as vagas: ${message}`;
+    state.error = error?.name === 'AbortError'
+      ? 'Não foi possível carregar as vagas: tempo limite excedido.'
+      : 'Não foi possível carregar as vagas. Verifique sua conexão e tente novamente.';
   } finally {
     clearTimeout(timeout);
     state.loading = false;
@@ -310,10 +311,10 @@ async function refreshNow() {
   try {
     const response = await fetch('/api/collect-now', { method: 'POST', cache: 'no-store' });
     const data = await response.json();
-    if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
+    if (!response.ok) throw new Error('Não foi possível atualizar as vagas.');
     await loadJobs({ quiet: true });
   } catch (error) {
-    state.error = `Falha ao atualizar: ${error?.message || error}`;
+    state.error = 'Falha ao atualizar as vagas. Verifique sua conexão e tente novamente.';
     render();
   } finally {
     state.refreshing = false;
