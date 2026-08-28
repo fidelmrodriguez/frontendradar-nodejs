@@ -48,24 +48,38 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-function isWithinHour(job) {
-  const postedText = String(job?.postedText || '').trim().toLowerCase();
-  if (/^(agora|just now|moments? ago|instantes?)$/.test(postedText)) return true;
+function getJobAgeMs(job) {
+  const postedText = String(job?.postedText || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
 
-  const relativeMatch = postedText.match(/(\d+)\s*(min|minuto|minutos|minute|minutes)\b/);
-  if (relativeMatch) return Number(relativeMatch[1]) < 60;
+  if (/\b(agora|just now|moments? ago|instantes?)\b/.test(postedText)) return 0;
+
+  const minutesMatch = postedText.match(/(\d+)\s*(min|minuto|minutos|minute|minutes)\b/);
+  if (minutesMatch) return Number(minutesMatch[1]) * 60 * 1000;
+
+  const hoursMatch = postedText.match(/(\d+)\s*(h|hora|horas|hour|hours|hr|hrs)\b/);
+  if (hoursMatch) return Number(hoursMatch[1]) * 60 * 60 * 1000;
 
   const timestamp = Number(job?.postedAt || 0);
-  if (!timestamp) return false;
+  if (!timestamp) return null;
+
   const age = Date.now() - timestamp;
-  return age >= 0 && age < 60 * 60 * 1000;
+  return age >= 0 ? age : null;
+}
+
+function isWithinHour(job) {
+  const age = getJobAgeMs(job);
+  return age !== null && age < 60 * 60 * 1000;
 }
 
 function prettyAge(job) {
-  const timestamp = Number(job?.postedAt || 0);
-  if (!timestamp) return job?.postedText || 'data não informada';
+  const diff = getJobAgeMs(job);
+  if (diff === null) return job?.postedText || 'data não informada';
 
-  const diff = Math.max(0, Date.now() - timestamp);
   const minutes = Math.floor(diff / 60000);
   if (minutes < 1) return 'agora';
   if (minutes < 60) return `há ${minutes} min`;
@@ -102,7 +116,6 @@ function getFilteredJobs() {
   const search = elements.searchInput.value.trim().toLowerCase();
   const period = elements.periodSelect.value;
   const periodMs = PERIOD_MS[period] || null;
-  const now = Date.now();
 
   return state.jobs.filter(job => {
     if (search) {
@@ -111,8 +124,8 @@ function getFilteredJobs() {
     }
 
     if (periodMs) {
-      const postedAt = Number(job.postedAt || 0);
-      if (!postedAt || now - postedAt > periodMs) return false;
+      const age = getJobAgeMs(job);
+      if (age === null || age > periodMs) return false;
     }
 
     return true;
@@ -123,9 +136,9 @@ function renderFavicon(freshCount) {
   const mode = freshCount > 0 ? 'new' : 'normal';
   if (elements.favicon.dataset.mode === mode) return;
 
-  const target = mode === 'new' ? '/favicon-new.svg' : '/favicon.svg';
+  const target = mode === 'new' ? '/favicon-new.svg?v=27' : '/favicon.svg?v=27';
   elements.favicon.dataset.mode = mode;
-  elements.favicon.href = `${target}?v=${Date.now()}`;
+  elements.favicon.href = target;
 }
 
 function renderStatus() {

@@ -103,10 +103,8 @@ function parseRelative(text) {
 
 function parseAbsolute(value) {
   const raw = clean(value);
-  if (!raw) return null;
-  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(raw)
-    ? Date.parse(`${raw}T12:00:00`)
-    : Date.parse(raw);
+  if (!raw || /^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const parsed = Date.parse(raw);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
