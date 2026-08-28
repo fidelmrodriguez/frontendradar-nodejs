@@ -6,11 +6,7 @@ Radar web de vagas Front-End no Brasil, desenvolvido com JavaScript, HTML, CSS e
 
 https://frontendradar-nodejs.netlify.app/
 
-## Objetivo
-
-Centralizar vagas Front-End do Brasil em uma única interface, priorizando vagas recentes e mantendo o histórico disponível independentemente do navegador ou dispositivo utilizado.
-
-## Principais recursos
+## Recursos
 
 * Dashboard responsivo em JavaScript puro, sem framework de front-end.
 * Coleta automática em background com Netlify Functions.
