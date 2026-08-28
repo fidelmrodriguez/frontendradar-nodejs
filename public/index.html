@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="bingbot" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="referrer" content="no-referrer" />
+  <title>LinkedIn Front-End Radar</title>
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div>
+        <h1>LinkedIn Front-End Radar <small>v26</small></h1>
+        <p>Vagas Front-End salvas no MongoDB e atualizadas automaticamente pelo Netlify.</p>
+      </div>
+
+      <div class="hero__actions">
+        <button id="refreshNow" type="button" class="button button--secondary">Atualizar agora</button>
+        <button id="maintenanceNow" type="button" class="button button--secondary" title="Remove vagas com mais de 90 dias e mantém somente as 2.000 mais recentes">Manutenção do banco</button>
+        <a
+          class="button"
+          href="https://www.linkedin.com/jobs/search/?keywords=frontend&location=Brazil&sortBy=DD"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Abrir LinkedIn ↗</a>
+      </div>
+    </header>
+
+    <section class="filters">
+      <label>
+        Filtrar vagas
+        <input id="searchInput" type="search" autocomplete="off" placeholder="Cargo, empresa ou local..." />
+      </label>
+
+      <label>
+        Período
+        <select id="periodSelect">
+          <option value="all">Todas as vagas carregadas</option>
+          <option value="r3600">Última 1 hora</option>
+          <option value="r21600">Últimas 6 horas</option>
+          <option value="r86400">Últimas 24 horas</option>
+          <option value="r604800">Últimos 7 dias</option>
+          <option value="r2592000">Últimos 30 dias</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="status-bar" aria-live="polite">
+      <span><i id="statusDot" class="status-dot"></i><strong id="statusText">Carregando...</strong></span>
+      <span>Vagas: <strong id="jobCount">0</strong></span>
+      <span>NOVO: <strong id="newCount">0</strong></span>
+      <span>≤ 1 hora: <strong id="hourCount">0</strong></span>
+      <span>Última coleta: <strong id="lastCollection">—</strong></span>
+    </section>
+
+    <div id="notice" class="notice" hidden></div>
+
+    <section id="loadingState" class="loading-state" role="status" aria-live="polite">
+      <div>
+        <div class="spinner"></div>
+        <strong>Carregando vagas de Front-End</strong>
+        <span>Lendo o banco persistente...</span>
+      </div>
+    </section>
+
+    <section id="jobList" class="job-list" hidden></section>
+    <section id="emptyState" class="empty-state" hidden>Nenhuma vaga encontrada com esses filtros.</section>
+  </main>
+
+  <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html>
