@@ -49,6 +49,12 @@ function escapeHtml(value) {
 }
 
 function isWithinHour(job) {
+  const postedText = String(job?.postedText || '').trim().toLowerCase();
+  if (/^(agora|just now|moments? ago|instantes?)$/.test(postedText)) return true;
+
+  const relativeMatch = postedText.match(/(\d+)\s*(min|minuto|minutos|minute|minutes)\b/);
+  if (relativeMatch) return Number(relativeMatch[1]) < 60;
+
   const timestamp = Number(job?.postedAt || 0);
   if (!timestamp) return false;
   const age = Date.now() - timestamp;
@@ -114,10 +120,12 @@ function getFilteredJobs() {
 }
 
 function renderFavicon(freshCount) {
-  const target = freshCount > 0 ? '/favicon-new.svg' : '/favicon.svg';
-  if (!elements.favicon.href.endsWith(target)) {
-    elements.favicon.href = `${target}?v=${freshCount > 0 ? 'new' : 'normal'}`;
-  }
+  const mode = freshCount > 0 ? 'new' : 'normal';
+  if (elements.favicon.dataset.mode === mode) return;
+
+  const target = mode === 'new' ? '/favicon-new.svg' : '/favicon.svg';
+  elements.favicon.dataset.mode = mode;
+  elements.favicon.href = `${target}?v=${Date.now()}`;
 }
 
 function renderStatus() {
@@ -174,7 +182,7 @@ function renderNotice() {
 function renderJobs() {
   const jobs = getFilteredJobs();
 
-  elements.loadingState.hidden = !state.loading;
+  elements.loadingState.hidden = !(state.loading || state.refreshing);
   elements.jobList.hidden = state.loading || jobs.length === 0;
   elements.emptyState.hidden = state.loading || jobs.length > 0;
 
@@ -242,6 +250,7 @@ async function refreshNow() {
   state.refreshing = true;
   elements.refreshNow.disabled = true;
   elements.refreshNow.textContent = 'Atualizando...';
+  render();
 
   try {
     const response = await fetch('/api/collect-now', { method: 'POST', cache: 'no-store' });
@@ -255,6 +264,7 @@ async function refreshNow() {
     state.refreshing = false;
     elements.refreshNow.disabled = false;
     elements.refreshNow.textContent = 'Atualizar agora';
+    render();
   }
 }
 

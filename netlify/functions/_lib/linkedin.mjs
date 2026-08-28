@@ -115,7 +115,8 @@ function parsePostedAt(text, datetime) {
   const absolute = parseAbsolute(datetime);
   const normalized = norm(text);
 
-  if (/\b(minute|minutes|minuto|minutos|min|hour|hours|hora|horas|hr|hrs|h)\b/.test(normalized)) {
+  if (/just now|agora|moments? ago|instantes?/.test(normalized)
+    || /\b(minute|minutes|minuto|minutos|min|hour|hours|hora|horas|hr|hrs|h)\b/.test(normalized)) {
     return relative ?? absolute;
   }
 
