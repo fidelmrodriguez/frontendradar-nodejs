@@ -133,7 +133,7 @@ O dashboard também calcula, em tempo real, o ritmo médio de publicação usand
 
 O botão `Ativar notificações` registra um Service Worker e solicita a permissão nativa do navegador. A assinatura Web Push é armazenada no MongoDB Atlas e o coletor envia uma notificação na primeira vez que o monitor identifica uma vaga ainda não processada para push e com menos de uma hora.
 
-A notificação é entregue pelo sistema operacional mesmo quando a aba do radar não está em primeiro plano. Ao clicar, a vaga correspondente é aberta no LinkedIn. O estado do botão é restaurado após recarregar a página e cada navegador/dispositivo mantém sua própria assinatura, portanto ativar ou desativar em uma máquina não altera as demais. Assinaturas expiradas são removidas automaticamente do banco.
+A notificação é entregue pelo sistema operacional mesmo quando a aba do radar não está em primeiro plano. No celular, ao clicar em uma vaga, o radar tenta abrir diretamente a vaga no aplicativo do LinkedIn; se o app não estiver instalado ou o sistema não aceitar o deep link, a mesma vaga é aberta no navegador. No desktop, o link continua sendo aberto normalmente no LinkedIn. O estado do botão é restaurado após recarregar a página e cada navegador/dispositivo mantém sua própria assinatura, portanto ativar ou desativar em uma máquina não altera as demais. Assinaturas expiradas são removidas automaticamente do banco.
 
 No Android e em navegadores desktop compatíveis, o Web Push funciona diretamente após a permissão. Em iPhone e iPad, o radar deve ser adicionado à Tela de Início e aberto como web app para receber Web Push.
 

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Abrindo vaga no LinkedIn...</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #07111f; color: #eaf2ff; }
+    main { width: min(92vw, 420px); text-align: center; padding: 28px; }
+    h1 { margin: 0 0 10px; font-size: 1.2rem; }
+    p { margin: 0 0 18px; color: #aebcd0; line-height: 1.5; }
+    a { display: inline-block; padding: 11px 16px; border-radius: 10px; background: #0a66c2; color: #fff; text-decoration: none; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Abrindo vaga no LinkedIn...</h1>
+    <p>Se o aplicativo estiver instalado, a vaga será aberta nele. Caso contrário, ela será aberta no navegador.</p>
+    <a id="fallbackLink" href="https://www.linkedin.com/jobs/">Abrir no LinkedIn</a>
+  </main>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const suppliedUrl = params.get('url') || '';
+      const suppliedJobId = params.get('jobId') || '';
+      const fallbackLink = document.querySelector('#fallbackLink');
+
+      function getSafeLinkedInUrl(value) {
+        try {
+          const parsed = new URL(value);
+          const validHost = /(^|\.)linkedin\.com$/i.test(parsed.hostname);
+          const validPath = /^\/jobs\/view\//i.test(parsed.pathname);
+          if (!validHost || !validPath || parsed.protocol !== 'https:') return null;
+          return parsed.href;
+        } catch {
+          return null;
+        }
+      }
+
+      const webUrl = getSafeLinkedInUrl(suppliedUrl) || 'https://www.linkedin.com/jobs/';
+      const idFromUrl = webUrl.match(/\/jobs\/view\/(?:[^/?#]*-)?(\d+)(?:[/?#]|$)/i)?.[1]
+        || webUrl.match(/\/jobs\/view\/(\d+)/i)?.[1]
+        || '';
+      const jobId = /^\d+$/.test(suppliedJobId) ? suppliedJobId : idFromUrl;
+      fallbackLink.href = webUrl;
+
+      const userAgent = navigator.userAgent || '';
+      const isAndroid = /android/i.test(userAgent);
+      const isIOS = /iphone|ipad|ipod/i.test(userAgent);
+
+      if (isAndroid && jobId) {
+        const canonicalUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
+        const encodedFallback = encodeURIComponent(canonicalUrl);
+        const intentUrl = `intent://www.linkedin.com/jobs/view/${jobId}/#Intent;scheme=https;package=com.linkedin.android;S.browser_fallback_url=${encodedFallback};end`;
+
+        location.replace(intentUrl);
+        setTimeout(() => {
+          if (!document.hidden) location.replace(canonicalUrl);
+        }, 1600);
+        return;
+      }
+
+      // No iOS, os links HTTPS do LinkedIn são Universal Links. O próprio sistema
+      // decide abrir o aplicativo instalado e usa o navegador como fallback.
+      if (isIOS) {
+        location.replace(webUrl);
+        return;
+      }
+
+      location.replace(webUrl);
+    })();
+  </script>
+</body>
+</html>

@@ -36,9 +36,23 @@ self.addEventListener('push', event => {
   })());
 });
 
+function getNotificationTarget(data = {}) {
+  const rawUrl = data.url || '/';
+  const targetUrl = new URL(rawUrl, self.location.origin).href;
+  const isMobile = /android|iphone|ipad|ipod/i.test(self.navigator?.userAgent || '');
+  const isLinkedInJob = /^https:\/\/(?:[a-z]{2}\.)?linkedin\.com\/jobs\/view\//i.test(targetUrl)
+    || /^https:\/\/www\.linkedin\.com\/jobs\/view\//i.test(targetUrl);
+
+  if (!isMobile || !isLinkedInJob) return targetUrl;
+
+  const params = new URLSearchParams({ url: targetUrl });
+  if (data.jobId) params.set('jobId', String(data.jobId));
+  return `${self.location.origin}/open-linkedin.html?${params.toString()}`;
+}
+
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  const targetUrl = getNotificationTarget(event.notification.data || {});
 
   event.waitUntil((async () => {
     if ('clearAppBadge' in navigator) {
