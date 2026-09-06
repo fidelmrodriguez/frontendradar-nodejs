@@ -148,7 +148,7 @@ A política padrão mantém vagas de até 90 dias e limita a coleção às 2.000
 ## Executar localmente
 
 ```bash
-git clone https://github.com/fidelmrodriguez/frontendradar-nodejs.git
+git clone <url-do-repositorio>
 cd frontendradar-nodejs
 npm install
 npm run dev
