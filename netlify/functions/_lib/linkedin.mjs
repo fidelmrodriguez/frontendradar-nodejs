@@ -38,6 +38,8 @@ const BACK_TECH = [
   /\bspring(?:\s+boot)?\b/i,
   /(?:^|[\s(/-])\.net(?:$|[\s)/,;-])/i,
   /\bdotnet\b/i,
+  /\bnet\b/i,
+  /\basp(?:\.|\s*)net\b/i,
   /(?:^|[\s(/-])c#(?:$|[\s)/,;-])/i,
   /\bpython\b/i,
   /\bdjango\b/i,

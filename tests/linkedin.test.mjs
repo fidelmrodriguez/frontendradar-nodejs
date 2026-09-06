@@ -12,6 +12,14 @@ test('rejeita fullstack e backend', () => {
   assert.equal(isFrontTitle('Backend Java Developer'), false);
 });
 
+
+test('rejeita cargos mistos de .NET com framework frontend quando não são explicitamente Front-End', () => {
+  assert.equal(isFrontTitle('Net e Angular Sr (Inglês avançado)'), false);
+  assert.equal(isFrontTitle('.NET e Angular Sr'), false);
+  assert.equal(isFrontTitle('ASP.NET + Angular Developer'), false);
+  assert.equal(isFrontTitle('Angular Developer'), true);
+});
+
 test('IDs diferentes são mantidos mesmo com título e empresa iguais', () => {
   const html = `
     <ul>

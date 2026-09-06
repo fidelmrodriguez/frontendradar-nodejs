@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from './db.mjs';
-import { fetchLinkedInSearch, parseSearchHtml } from './linkedin.mjs';
+import { fetchLinkedInSearch, isFrontTitle, parseSearchHtml } from './linkedin.mjs';
 import { getRetentionDays, getMaxStoredJobs } from './maintenance.mjs';
 import { notifyNewJobs } from './push.mjs';
 
@@ -359,11 +359,24 @@ export async function runCollector({ manual = false, maxRequests = 2 } = {}) {
 export async function readDashboardData() {
   const db = await getDb();
   const state = await ensureState(db);
-  const jobs = await db.collection('jobs')
-    .find({}, { projection: { _id: 0 } })
+  const storedJobs = await db.collection('jobs')
+    .find({})
     .sort({ postedAt: -1, id: -1 })
     .limit(1500)
     .toArray();
+
+  const invalidIds = storedJobs
+    .filter(job => !isFrontTitle(job.title))
+    .map(job => job._id)
+    .filter(Boolean);
+
+  if (invalidIds.length) {
+    await db.collection('jobs').deleteMany({ _id: { $in: invalidIds } });
+  }
+
+  const jobs = storedJobs
+    .filter(job => isFrontTitle(job.title))
+    .map(({ _id, ...job }) => job);
 
   return {
     jobs,
