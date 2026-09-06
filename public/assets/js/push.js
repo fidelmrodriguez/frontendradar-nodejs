@@ -84,7 +84,11 @@ async function syncSubscription(subscription) {
 
 async function getReadyRegistration() {
   if (registration) return registration;
-  await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  const swRegistration = await navigator.serviceWorker.register('/sw.js', {
+    scope: '/',
+    updateViaCache: 'none',
+  });
+  await swRegistration.update().catch(() => undefined);
   registration = await navigator.serviceWorker.ready;
   return registration;
 }

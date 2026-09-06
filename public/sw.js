@@ -1,3 +1,5 @@
+const SW_VERSION = '2026-09-06-mobile-deeplink-v2';
+
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
@@ -16,6 +18,7 @@ self.addEventListener('push', event => {
     data: {
       url: data.url || '/',
       jobId: data.jobId || '',
+      swVersion: SW_VERSION,
     },
     tag: data.jobId ? `frontend-job-${data.jobId}` : 'frontend-radar',
     renotify: true,
@@ -36,23 +39,37 @@ self.addEventListener('push', event => {
   })());
 });
 
-function getNotificationTarget(data = {}) {
+function getSafeTarget(data = {}) {
   const rawUrl = data.url || '/';
   const targetUrl = new URL(rawUrl, self.location.origin).href;
-  const isMobile = /android|iphone|ipad|ipod/i.test(self.navigator?.userAgent || '');
+  const userAgent = self.navigator?.userAgent || '';
+  const isAndroid = /android/i.test(userAgent);
+  const isIOS = /iphone|ipad|ipod/i.test(userAgent);
   const isLinkedInJob = /^https:\/\/(?:[a-z]{2}\.)?linkedin\.com\/jobs\/view\//i.test(targetUrl)
     || /^https:\/\/www\.linkedin\.com\/jobs\/view\//i.test(targetUrl);
 
-  if (!isMobile || !isLinkedInJob) return targetUrl;
+  if (!isLinkedInJob) return targetUrl;
 
-  const params = new URLSearchParams({ url: targetUrl });
-  if (data.jobId) params.set('jobId', String(data.jobId));
-  return `${self.location.origin}/open-linkedin.html?${params.toString()}`;
+  // iOS/iPadOS: usa o HTTPS da vaga diretamente no clique da notificação.
+  // Esse é o formato de Universal Link do LinkedIn: se o app estiver instalado
+  // e associado pelo iOS, o sistema abre o app; caso contrário, abre o navegador.
+  if (isIOS) return targetUrl;
+
+  // Android: passa por uma página intermediária que dispara uma Intent explícita
+  // para o pacote oficial do LinkedIn e usa a URL web apenas como fallback.
+  if (isAndroid) {
+    const params = new URLSearchParams({ url: targetUrl });
+    if (data.jobId) params.set('jobId', String(data.jobId));
+    params.set('v', SW_VERSION);
+    return `${self.location.origin}/open-linkedin.html?${params.toString()}`;
+  }
+
+  return targetUrl;
 }
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const targetUrl = getNotificationTarget(event.notification.data || {});
+  const targetUrl = getSafeTarget(event.notification.data || {});
 
   event.waitUntil((async () => {
     if ('clearAppBadge' in navigator) {
@@ -66,6 +83,10 @@ self.addEventListener('notificationclick', event => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const existing = windows.find(client => client.url === targetUrl);
     if (existing && 'focus' in existing) return existing.focus();
+
+    // Mantém a abertura dentro do gesto real do clique da notificação. Isso é
+    // importante especialmente no iOS para que o Universal Link tenha a melhor
+    // chance de ser entregue ao aplicativo do LinkedIn.
     return self.clients.openWindow(targetUrl);
   })());
 });

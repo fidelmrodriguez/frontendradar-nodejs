@@ -63,10 +63,14 @@
         return;
       }
 
-      // No iOS, os links HTTPS do LinkedIn são Universal Links. O próprio sistema
-      // decide abrir o aplicativo instalado e usa o navegador como fallback.
+      // No iOS/iPadOS, o Service Worker envia a vaga diretamente como Universal Link.
+      // Este bloco fica como fallback caso esta página seja aberta manualmente.
       if (isIOS) {
-        location.replace(webUrl);
+        const canonicalUrl = jobId
+          ? `https://www.linkedin.com/jobs/view/${jobId}/`
+          : webUrl;
+        fallbackLink.href = canonicalUrl;
+        location.replace(canonicalUrl);
         return;
       }
 
