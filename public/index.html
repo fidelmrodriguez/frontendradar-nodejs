@@ -1,80 +1,194 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
-  <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
-  <meta name="bingbot" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
-  <meta name="referrer" content="no-referrer" />
-  <meta name="theme-color" content="#08111d" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>frontendradar-nodejs</title>
-  <link id="shortcut-favicon" rel="shortcut icon" href="/favicon.ico?v=28" />
-  <link id="app-favicon" rel="icon" href="/favicon.ico?v=28" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>danboorutags-javascript</title>
+  <meta name="description" content="Explore tags do Danbooru por ano, categoria, personagem e franquia usando JavaScript puro.">
+  <meta name="theme-color" content="#0f1115">
+  <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
 <body>
-  <main class="app-shell">
-    <header class="hero">
-      <div>
-        <h1>frontendradar-nodejs <small>v26</small></h1>
-        <p>Vagas Front-End do LinkedIn salvas no MongoDB e atualizadas automaticamente pelo Netlify.</p>
-      </div>
+<main class="container">
+  <h1>danboorutags-javascript</h1>
+  <p class="sub">Tags em ordem cronológica: janeiro → dezembro.</p>
 
-      <div class="hero__actions">
-        <button id="notificationToggle" type="button" class="button button--secondary">Verificando notificações...</button>
-        <button id="refreshNow" type="button" class="button button--secondary">Atualizar agora</button>
-        <a
-          class="button"
-          href="https://www.linkedin.com/jobs/search/?keywords=frontend&location=Brazil&sortBy=DD"
-          target="_blank"
-          rel="noopener noreferrer"
-        >Abrir LinkedIn ↗</a>
-      </div>
-    </header>
+  <div class="tabs-row">
+    <div class="tabs" role="tablist" aria-label="Tipo de busca">
+    <button id="simpleTab" class="tab-button active" type="button" role="tab" aria-selected="true">
+      Busca simples
+    </button>
+    <button id="advancedTab" class="tab-button" type="button" role="tab" aria-selected="false">
+      Busca avançada
+    </button>
+    </div>
+    <p id="tabDescription" class="tab-description">
+      Busca simples: filtre apenas por ano, ordenação, categoria e quantidade mínima de posts.
+    </p>
+  </div>
 
-    <section class="filters">
-      <label>
-        Filtrar vagas
-        <input id="searchInput" type="search" autocomplete="off" placeholder="Cargo, empresa ou local..." />
+  <section id="searchPanel" class="panel simple-mode">
+    <div class="filters">
+      <label id="yearField" class="simple-only">
+        Ano
+        <input id="year" type="number" min="2005" max="2100" value="2025">
       </label>
 
-      <label>
-        Período
-        <select id="periodSelect">
-          <option value="all">Todas as vagas carregadas</option>
-          <option value="r3600">Última 1 hora</option>
-          <option value="r21600">Últimas 6 horas</option>
-          <option value="r86400">Últimas 24 horas</option>
-          <option value="r604800">Últimos 7 dias</option>
-          <option value="r2592000">Últimos 30 dias</option>
+      <label id="advancedYearsField" class="advanced-only advanced-years-field">
+        Anos
+        <div id="yearInputShell" class="year-input-shell">
+          <div id="yearChips" class="year-chips"></div>
+          <input id="advancedYearInput" type="number" min="2005" max="2100" placeholder="Digite um ano">
+          <button id="addYearBtn" type="button" title="Adicionar ano" aria-label="Adicionar ano">+</button>
+        </div>
+      </label>
+
+      <label id="characterField" class="advanced-only">
+        Personagem
+        <div id="characterAutocomplete" class="tag-autocomplete">
+          <div class="tag-autocomplete-shell">
+            <div id="characterChip" class="tag-chip-slot"></div>
+            <input
+              id="character"
+              type="text"
+              placeholder="ex: hatsune_miku"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="characterSuggestions"
+              aria-expanded="false"
+            >
+          </div>
+          <div
+            id="characterSuggestions"
+            class="tag-autocomplete-menu"
+            role="listbox"
+            hidden
+          ></div>
+        </div>
+      </label>
+
+      <label id="copyrightField" class="advanced-only">
+        Anime / franquia / mangá
+        <div id="copyrightAutocomplete" class="tag-autocomplete">
+          <div class="tag-autocomplete-shell">
+            <div id="copyrightChip" class="tag-chip-slot"></div>
+            <input
+              id="copyright"
+              type="text"
+              placeholder="ex: vocaloid"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="copyrightSuggestions"
+              aria-expanded="false"
+            >
+          </div>
+          <div
+            id="copyrightSuggestions"
+            class="tag-autocomplete-menu"
+            role="listbox"
+            hidden
+          ></div>
+        </div>
+      </label>
+
+      <label id="categoryField">
+        Categoria das tags
+        <select id="category">
+          <option value="">Todas</option>
+          <option value="0">General</option>
+          <option value="1">Artist</option>
+          <option value="3">Copyright</option>
+          <option value="4" selected>Character</option>
+          <option value="5">Meta</option>
         </select>
       </label>
-    </section>
 
-    <section class="status-bar" aria-live="polite">
-      <span><i id="statusDot" class="status-dot"></i><strong id="statusText">Carregando...</strong></span>
-      <span>Vagas: <strong id="jobCount">0</strong></span>
-      <span>NOVO: <strong id="newCount">0</strong></span>
-      <span>≤ 1 hora: <strong id="hourCount">0</strong></span>
-      <span title="Média calculada com todas as vagas atualmente carregadas no dashboard.">Ritmo médio: <strong id="averageInterval">calculando...</strong></span>
-      <span>Última coleta: <strong id="lastCollection">—</strong></span>
-      <div id="loadingState" class="loading-inline" role="status" aria-live="polite">
-        <span class="mini-spinner" aria-hidden="true"></span>
-        <span>Carregando vagas...</span>
+      <label id="minPostsField">
+        Posts mínimos da tag
+        <input id="minPosts" type="number" min="0" value="1">
+      </label>
+
+      <label id="orderField" class="simple-only">
+        Ordenação
+        <select id="order">
+          <option value="date_asc" selected>Data: janeiro → dezembro</option>
+          <option value="count">Mais usada</option>
+          <option id="associationOrderOption" value="association">Mais frequente no filtro</option>
+          <option value="name">Nome</option>
+        </select>
+      </label>
+
+      <label id="maxPostsField" class="advanced-only">
+        Posts para analisar
+        <select id="maxPosts">
+          <option value="200">200</option>
+          <option value="500">500</option>
+          <option value="1000" selected>1.000</option>
+          <option value="2000">2.000</option>
+          <option value="5000">5.000</option>
+        </select>
+      </label>
+
+      <label id="deprecatedField" class="advanced-only">
+        Deprecated
+        <select id="deprecated">
+          <option value="">Mostrar todas</option>
+          <option value="false" selected>Ocultar</option>
+          <option value="true">Somente deprecated</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="actions-row">
+      <div class="actions">
+        <button id="searchBtn" class="primary">Buscar tags</button>
+        <button id="csvBtn" disabled>Exportar CSV</button>
       </div>
-    </section>
 
-    <div id="notice" class="notice" hidden></div>
+      <div id="searchHint" class="hint">
+        Ordenação padrão: <strong>do começo do ano para o fim</strong>.
+      </div>
+    </div>
+  </section>
 
-    <section id="jobList" class="job-list" hidden></section>
-    <section id="emptyState" class="empty-state" hidden>Nenhuma vaga encontrada com esses filtros.</section>
-  </main>
+  <section class="panel">
+    <div class="status-row">
+      <span id="status">Pronto.</span>
+      <span id="scanInfo"></span>
+    </div>
 
-  <script type="module" src="/assets/js/main.js?v=30"></script>
+    <div id="progress" class="progress"><div id="progressBar"></div></div>
+    <div id="error"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th data-sort="id"><button type="button" class="sort-button" data-sort-key="id"><span>ID</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th data-sort="name"><button type="button" class="sort-button" data-sort-key="name"><span>Tag</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th data-sort="category"><button type="button" class="sort-button" data-sort-key="category"><span>Categoria</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th class="num" data-sort="post_count"><button type="button" class="sort-button" data-sort-key="post_count"><span>Posts</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th class="num" data-sort="association_count"><button type="button" class="sort-button" data-sort-key="association_count"><span>Ocorrências no filtro</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th data-sort="created_at"><button type="button" class="sort-button" data-sort-key="created_at"><span>Criada em</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th data-sort="is_deprecated"><button type="button" class="sort-button" data-sort-key="is_deprecated"><span>Status</span><span class="sort-indicator" aria-hidden="true">↕</span></button></th>
+          <th>Links</th>
+        </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="8">Clique em "Buscar tags".</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="pagination" class="pagination" hidden>
+      <button id="firstBtn" disabled>⏮ Primeira</button>
+      <button id="prevBtn" disabled>← Anterior</button>
+      <span id="pageStatus" class="page-status">Página 1</span>
+      <button id="nextBtn" disabled>Próxima →</button>
+      <button id="lastBtn" disabled>Última ⏭</button>
+    </div>
+  </section>
+</main>
+  <script src="./assets/js/main.js"></script>
 </body>
 </html>
