@@ -53,6 +53,12 @@ function escapeHtml(value) {
 }
 
 function getJobAgeMs(job) {
+  const timestamp = Number(job?.postedAt || 0);
+  if (timestamp) {
+    const age = Date.now() - timestamp;
+    if (age >= 0) return age;
+  }
+
   const postedText = String(job?.postedText || '')
     .trim()
     .toLowerCase()
@@ -80,11 +86,7 @@ function getJobAgeMs(job) {
   const yearsMatch = postedText.match(/(\d+)\s*(ano|anos|year|years)\b/);
   if (yearsMatch) return Number(yearsMatch[1]) * 365.25 * 24 * 60 * 60 * 1000;
 
-  const timestamp = Number(job?.postedAt || 0);
-  if (!timestamp) return null;
-
-  const age = Date.now() - timestamp;
-  return age >= 0 ? age : null;
+  return null;
 }
 
 function isWithinHour(job) {
@@ -93,9 +95,6 @@ function isWithinHour(job) {
 }
 
 function prettyAge(job) {
-  const rawPostedText = String(job?.postedText || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  if (/\bha pouco\b/.test(rawPostedText)) return 'há pouco';
-
   const diff = getJobAgeMs(job);
   if (diff === null) return job?.postedText || 'data não informada';
 
